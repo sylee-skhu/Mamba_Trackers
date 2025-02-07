@@ -1,6 +1,7 @@
 # Customized
 temp.py
 weights/*
+*/saved_ckpts/
 
 .vscode/ 
 *.pt
