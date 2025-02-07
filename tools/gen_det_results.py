@@ -23,7 +23,7 @@ def get_args():
 
     parser.add_argument('--dataset_name', required=True, type=str, default='visdrone')
     parser.add_argument('--split', type=str, default='train')
-    parser.add_argument('--data_root', required=True, type=str, default='/home/sangyun/Datasets/VisDrone2019/VisDrone2019/images')
+    parser.add_argument('--data_root', required=True, type=str, default='/home/sangyun/Datasets/VisDrone2019/images')
     parser.add_argument('--exp_file', required=True, type=str, default='')
     parser.add_argument('--model_path', required=True, type=str, default='weights/yolo')
 

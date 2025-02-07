@@ -21,7 +21,7 @@ if false; then
         --det_path ../det_results/visdrone/test \
         --motion_model_path saved_ckpts/mambatrack_visdrone/epoch10.pth \
         --config_file cfgs/MambaTrack.yaml \
-        --data_root /home/sangyun/Datasets/VisDrone2019/VisDrone2019/images/{split}/{seq}/{frame_id:06d}.jpg
+        --data_root /home/sangyun/Datasets/VisDrone2019/images/{split}/{seq}/{frame_id:06d}.jpg
 fi
 
 cd ../

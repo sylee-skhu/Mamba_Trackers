@@ -32,7 +32,7 @@ import argparse
 DATA_ROOT = '/home/sangyun/Datasets'
 
 MOT17_PATH = os.path.join(DATA_ROOT, 'MOT17')
-VISDRONE_PATH = os.path.join(DATA_ROOT, 'VisDrone2019/VisDrone2019')
+VISDRONE_PATH = os.path.join(DATA_ROOT, 'VisDrone2019')
 UAVDT_PATH = os.path.join(DATA_ROOT, 'UAVDT')
 DANCETRACK_PATH = os.path.join(DATA_ROOT, 'DanceTrack')
 
