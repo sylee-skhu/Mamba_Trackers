@@ -103,12 +103,14 @@ cython==3.0.11
 cython-bbox==0.1.5
 lap==0.5.12
 loguru==0.7.3
-opencv-python==4.7.0
+opencv-python==4.7.0.72
 
-torch==1.13.1+cu116
-torchvision==0.14.1+cu116
+torch==2.1.2+cu121
+torchvision==0.16.2+cu121
+torchaudio==2.1.2+cu121
 yolox==0.1.0
-mamba-ssm==2.2.3.post2
+causal_conv1d==1.1.1
+mamba-ssm==1.2.0.post1
 ```
 
 For installing yolox, please refer to [ByteTrack](https://github.com/ifzhang/ByteTrack), and for installing mamba-ssm, please refer to [Mamba](https://github.com/state-spaces/mamba).
