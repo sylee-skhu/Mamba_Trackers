@@ -20,16 +20,16 @@ format:
 }
 """
 
-import os 
+import os
 import copy
-import numpy as np 
+import numpy as np
 import json
 from typing import List, Dict, Union
 import configparser
-import cv2 
+import cv2
 import argparse
 
-DATA_ROOT = '/data/wujiapeng/datasets'
+DATA_ROOT = '/home/sangyun/Datasets'
 
 MOT17_PATH = os.path.join(DATA_ROOT, 'MOT17')
 VISDRONE_PATH = os.path.join(DATA_ROOT, 'VisDrone2019/VisDrone2019')
@@ -37,12 +37,13 @@ UAVDT_PATH = os.path.join(DATA_ROOT, 'UAVDT')
 DANCETRACK_PATH = os.path.join(DATA_ROOT, 'DanceTrack')
 
 VALID_CATEGORIES = {
-    'mot17': [1, ], 
-    'visdrone': [1, 4, 5, 6, 9], 
+    'mot17': [1, ],
+    'visdrone': [1, 4, 5, 6, 9],
     'uavdt': [1, ]
 }
 
-def gen_mot17(annotation_all: dict, split: str = 'train', obj_id_base: int = 0, 
+
+def gen_mot17(annotation_all: dict, split: str = 'train', obj_id_base: int = 0,
               sequences: List[str] = None, filter: bool = True, filter_len: int = 15) -> int:
 
     print('parsing dataset MOT17')
@@ -56,11 +57,11 @@ def gen_mot17(annotation_all: dict, split: str = 'train', obj_id_base: int = 0,
 
     obj_id_start = obj_id_base
     obj_cnt, valid_obj_cnt = 0, 0
-    
 
     for seq in seqs:
 
-        if not seq in sequences: continue
+        if not seq in sequences:
+            continue
 
         print(f'parsing {seq}, obj id base {obj_id_start}')
 
@@ -96,9 +97,9 @@ def gen_mot17(annotation_all: dict, split: str = 'train', obj_id_base: int = 0,
                     # new obj
                     valid_cnt_in_seq += 1
                     annotation_dataset[obj_id] = {
-                        'image_h': image_h, 
-                        'image_w': image_w, 
-                        'traj_len': 1, 
+                        'image_h': image_h,
+                        'image_w': image_w,
+                        'traj_len': 1,
                         'bboxes': [bbox]
                     }
                 else:
@@ -141,10 +142,10 @@ def gen_mot17(annotation_all: dict, split: str = 'train', obj_id_base: int = 0,
 
     return obj_id_base + valid_obj_cnt
 
-def gen_visdrone(annotation_all: dict, split: str = 'VisDrone2019-MOT-train', obj_id_base: int = 0, 
+
+def gen_visdrone(annotation_all: dict, split: str = 'VisDrone2019-MOT-train', obj_id_base: int = 0,
                  sequences: List[str] = None, filter: bool = True, filter_len: int = 25) -> int:
-              
-    
+
     print('parsing dataset VisDrone')
 
     annotation_dataset = dict()
@@ -159,7 +160,8 @@ def gen_visdrone(annotation_all: dict, split: str = 'VisDrone2019-MOT-train', ob
 
     for seq in seqs:
 
-        if not seq in sequences: continue
+        if not seq in sequences:
+            continue
 
         print(f'parsing {seq}, obj id base {obj_id_start}')
 
@@ -195,9 +197,9 @@ def gen_visdrone(annotation_all: dict, split: str = 'VisDrone2019-MOT-train', ob
                     # new obj
                     valid_cnt_in_seq += 1
                     annotation_dataset[obj_id] = {
-                        'image_h': image_h, 
-                        'image_w': image_w, 
-                        'traj_len': 1, 
+                        'image_h': image_h,
+                        'image_w': image_w,
+                        'traj_len': 1,
                         'bboxes': [bbox]
                     }
                 else:
@@ -240,8 +242,9 @@ def gen_visdrone(annotation_all: dict, split: str = 'VisDrone2019-MOT-train', ob
 
     return obj_id_base + valid_obj_cnt
 
-def gen_dancetrack(annotation_all: dict, split: str = 'train', obj_id_base: int = 0, 
-                 sequences: List[str] = None, filter: bool = True, filter_len: int = 25) -> int:
+
+def gen_dancetrack(annotation_all: dict, split: str = 'train', obj_id_base: int = 0,
+                   sequences: List[str] = None, filter: bool = True, filter_len: int = 25) -> int:
 
     print('parsing dataset DanceTrack')
 
@@ -254,18 +257,18 @@ def gen_dancetrack(annotation_all: dict, split: str = 'train', obj_id_base: int 
 
     obj_id_start = obj_id_base
     obj_cnt, valid_obj_cnt = 0, 0
-    
-    
+
     for seq in seqs:
 
-        if not seq in sequences: continue
+        if not seq in sequences:
+            continue
 
         print(f'parsing {seq}, obj id base {obj_id_start}')
 
         # get h and w first
         config = configparser.ConfigParser()
         seq_info = os.path.join(DANCETRACK_PATH, split, seq, 'seqinfo.ini')
-        
+
         config.read(seq_info)
         image_w = int(config['Sequence']['imWidth'])
         image_h = int(config['Sequence']['imHeight'])
@@ -294,9 +297,9 @@ def gen_dancetrack(annotation_all: dict, split: str = 'train', obj_id_base: int 
                 # new obj
                 valid_cnt_in_seq += 1
                 annotation_dataset[obj_id] = {
-                    'image_h': image_h, 
-                    'image_w': image_w, 
-                    'traj_len': 1, 
+                    'image_h': image_h,
+                    'image_w': image_w,
+                    'traj_len': 1,
                     'bboxes': [bbox]
                 }
             else:
@@ -360,9 +363,9 @@ if __name__ == '__main__':
     if args.dancetrack:
         obj_id_base = gen_dancetrack(annotation_all=annotation_all, split='train', obj_id_base=obj_id_base, sequences=['all'])
 
-    # save 
+    # save
     output_file = os.path.join('./ssm_tracker/traj_anno_data', f'{args.save_name}.json')
-    
+
     with open(output_file, 'w') as f:
         json.dump(annotation_all, f)
 
