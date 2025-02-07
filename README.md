@@ -109,8 +109,8 @@ torch==2.1.2+cu121
 torchvision==0.16.2+cu121
 torchaudio==2.1.2+cu121
 yolox==0.1.0
-causal_conv1d==1.1.1
-mamba-ssm==1.2.0.post1
+causal-conv1d==1.4.0
+mamba-ssm==2.2.2
 ```
 
 For installing yolox, please refer to [ByteTrack](https://github.com/ifzhang/ByteTrack), and for installing mamba-ssm, please refer to [Mamba](https://github.com/state-spaces/mamba).
