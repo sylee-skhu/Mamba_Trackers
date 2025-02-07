@@ -132,12 +132,14 @@ class MOTDataset(Dataset):
             img, target = self.preproc(img, target, self.input_dim)
         return img, target, img_info, img_id
 
+
 class VisDroneDataset(MOTDataset):
     def __init__(self, data_dir=None, json_file="train_half.json", name="train", img_size=(608, 1088), preproc=None):
         super().__init__(data_dir, json_file, name, img_size, preproc)
-        self.DATA_ROOT = '/data/wujiapeng/datasets/VisDrone2019/VisDrone2019'
-        self.VisD_dict = {'train':'VisDrone2019-MOT-train',
-                          'test':'VisDrone2019-MOT-test-dev'}
+        self.DATA_ROOT = '/home/sangyun/Datasets/VisDrone2019/VisDrone2019'
+        self.VisD_dict = {'train': 'VisDrone2019-MOT-train',
+                          'test': 'VisDrone2019-MOT-test-dev'}
+
     def pull_item(self, index):
         id_ = self.ids[index]
 

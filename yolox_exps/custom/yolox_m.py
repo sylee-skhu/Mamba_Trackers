@@ -8,6 +8,7 @@ import torch.distributed as dist
 from yolox.exp import Exp as MyExp
 from yolox.data import get_yolox_datadir
 
+
 class Exp(MyExp):
     def __init__(self):
         super(Exp, self).__init__()
@@ -42,8 +43,8 @@ class Exp(MyExp):
 
         dataset = MOTDataset(
             # data_dir=os.path.join(get_yolox_datadir(), "mot"),
-            # data_dir='/data/wujiapeng/datasets/UAVDT',
-            data_dir='/data/wujiapeng/datasets/VisDrone2019/VisDrone2019',
+            # data_dir='/home/sangyun/Datasets/UAVDT',
+            data_dir='/home/sangyun/Datasets/VisDrone2019/VisDrone2019',
             json_file=self.train_ann,
             name='train',
             img_size=self.input_size,
@@ -100,8 +101,8 @@ class Exp(MyExp):
 
         valdataset = MOTDataset(
             # data_dir=os.path.join(get_yolox_datadir(), "mot"),
-            # data_dir='/data/wujiapeng/datasets/UAVDT',
-            data_dir='/data/wujiapeng/datasets/VisDrone2019/VisDrone2019',
+            # data_dir='/home/sangyun/Datasets/UAVDT',
+            data_dir='/home/sangyun/Datasets/VisDrone2019/VisDrone2019',
             json_file=self.val_ann,
             img_size=self.test_size,
             name='test',

@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-import cv2 
+import cv2
 from PIL import Image
 from tqdm import tqdm
 
@@ -16,13 +16,14 @@ from yolox.data.data_augment import preproc
 
 from loguru import logger
 
+
 def get_args():
-    
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--dataset_name', required=True, type=str, default='visdrone')
     parser.add_argument('--split', type=str, default='train')
-    parser.add_argument('--data_root', required=True, type=str, default='/data/wujiapeng/datasets/VisDrone2019/VisDrone2019/images')
+    parser.add_argument('--data_root', required=True, type=str, default='/home/sangyun/Datasets/VisDrone2019/VisDrone2019/images')
     parser.add_argument('--exp_file', required=True, type=str, default='')
     parser.add_argument('--model_path', required=True, type=str, default='weights/yolo')
 
@@ -41,6 +42,7 @@ def get_args():
 
     return parser.parse_args()
 
+
 def select_device(device):
     """ set device 
     Args:
@@ -48,7 +50,7 @@ def select_device(device):
 
     Return:
         torch.device
-    
+
     """
 
     if device == 'cpu':
@@ -56,7 +58,7 @@ def select_device(device):
 
     elif ',' in device:  # multi-gpu
         logger.error('Multi-GPU currently not supported')
-    
+
     else:
         logger.info(f'set gpu {device}')
         os.environ['CUDA_VISIBLE_DEVICES'] = device
@@ -66,6 +68,7 @@ def select_device(device):
     device = torch.device('cuda:0' if cuda else 'cpu')
     return device
 
+
 def postprocess_yolox(out, num_classes, conf_thresh, img, ori_img):
     """
     convert out to  -> (tlbr, conf, cls)
@@ -73,14 +76,15 @@ def postprocess_yolox(out, num_classes, conf_thresh, img, ori_img):
 
     out = postprocess(out, num_classes, conf_thresh, )[0]  # (tlbr, obj_conf, cls_conf, cls)
 
-    if out is None: return out
+    if out is None:
+        return out
 
-    # merge conf 
+    # merge conf
     out[:, 4] *= out[:, 5]
     out[:, 5] = out[:, -1]
     out = out[:, :-1]
 
-    # scale to origin size 
+    # scale to origin size
 
     img_size = [img.shape[-2], img.shape[-1]]  # h, w
     ori_img_size = [ori_img.shape[0], ori_img.shape[1]]  # h0, w0
@@ -88,22 +92,22 @@ def postprocess_yolox(out, num_classes, conf_thresh, img, ori_img):
 
     scale = min(float(img_h) / ori_img_size[0], float(img_w) / ori_img_size[1])
 
-    out[:, :4] /= scale 
+    out[:, :4] /= scale
 
     return out
+
 
 def save_results(folder_name, seq_name, result_dict, data_type='default'):
     """
     write results to txt file
 
     """
-    
 
     if not os.path.exists(folder_name):
-        os.makedirs(folder_name) 
+        os.makedirs(folder_name)
 
     with open(os.path.join(folder_name, seq_name + '.txt'), 'w') as f:
-        
+
         for frame_id, output in result_dict.items():
 
             for det in output:
@@ -113,18 +117,21 @@ def save_results(folder_name, seq_name, result_dict, data_type='default'):
 
     return folder_name
 
+
 def save_meta_data(folder_name, meta_data):
     if not os.path.exists(folder_name):
-        os.makedirs(folder_name) 
+        os.makedirs(folder_name)
 
     with open(os.path.join(folder_name, 'meta_data.txt'), 'w') as f:
         for k, v in meta_data.items():
             line = k + ','
-            for item in v: line += str(item) + ','
+            for item in v:
+                line += str(item) + ','
             line = line[:-1]  # drop the last comma
 
             f.write(line + '\n')
     f.close()
+
 
 def plot_img(img, frame_id, results, save_dir):
     """
@@ -145,13 +152,14 @@ def plot_img(img, frame_id, results, save_dir):
 
         cv2.rectangle(img_, tlbr[:2], tlbr[2:], (0, 255, 0), thickness=3, )
 
-        cv2.putText(img_, text, (tlbr[0], tlbr[1]), fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1, 
-                        color=(255, 164, 0), thickness=2)
-        
+        cv2.putText(img_, text, (tlbr[0], tlbr[1]), fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1,
+                    color=(255, 164, 0), thickness=2)
+
     cv2.imwrite(filename=os.path.join(save_dir, f'{frame_id:05d}.jpg'), img=img_)
 
+
 def main(args):
-    
+
     exp = get_exp(args.exp_file, args.dataset_name)
 
     device = select_device(args.device)
@@ -165,13 +173,13 @@ def main(args):
     model.load_state_dict(ckpt["model"])
     logger.info("loaded checkpoint done.")
 
-    # default fuse the model 
+    # default fuse the model
     logger.info("\tFusing model...")
     model = fuse_model(model)
 
     if args.fp16:
         model = model.half()
-    
+
     data_root = os.path.join(args.data_root, args.split)
     save_dir = args.save_dir.format(dataset_name=args.dataset_name, split=args.split)
 
@@ -192,14 +200,14 @@ def main(args):
         frame_id = 1
 
         img_ori = cv2.imread(os.path.join(data_root, seq, imgs[0]))
-        meta_data[seq] = [img_ori.shape[0], img_ori.shape[1]]  # h, w, 
+        meta_data[seq] = [img_ori.shape[0], img_ori.shape[1]]  # h, w,
 
         for img_name in tqdm(imgs):
             img_ori = cv2.imread(os.path.join(data_root, seq, img_name))
 
             # save meta data
             if not seq in meta_data.keys():
-                meta_data[seq] = [img_ori.shape[0], img_ori.shape[1]]  # h, w, 
+                meta_data[seq] = [img_ori.shape[0], img_ori.shape[1]]  # h, w,
 
             img, ratio = preproc(img_ori, args.img_size, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
 
@@ -211,7 +219,7 @@ def main(args):
             with torch.no_grad():
                 output = model(img)
 
-                output = postprocess_yolox(output, exp.num_classes, 0.05, img, img_ori)  # [N, 5] 
+                output = postprocess_yolox(output, exp.num_classes, 0.05, img, img_ori)  # [N, 5]
 
                 # tlbr to tlwh
                 output[:, 2] -= output[:, 0]
@@ -224,7 +232,6 @@ def main(args):
 
             frame_id += 1
 
-
         # write result
         logger.info(f'write results of seq {seq}')
 
@@ -233,11 +240,8 @@ def main(args):
     # save meta data
     if args.generate_meta_data:
         save_meta_data(save_dir, meta_data)
-                
 
 
 if __name__ == '__main__':
     args = get_args()
     main(args)
-
-

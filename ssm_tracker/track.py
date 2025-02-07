@@ -2,11 +2,11 @@
 Track from saved det results
 """
 
-import numpy as np 
-import os 
+import numpy as np
+import os
 import argparse
 from loguru import logger
-import cv2 
+import cv2
 import yaml
 from copy import deepcopy
 
@@ -16,8 +16,9 @@ from track_utils.tracker import MambaTracker
 
 from train_utils.envs import select_device
 
+
 def get_args():
-    
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--det_path', required=True, type=str)
@@ -27,7 +28,7 @@ def get_args():
 
     parser.add_argument('--device', type=str, default='4')
 
-    parser.add_argument('--data_root', type=str, default='/data/wujiapeng/datasets/MOT17/images/{split}/{seq}/{frame_id:06d}.jpg')
+    parser.add_argument('--data_root', type=str, default='/home/sangyun/Datasets/MOT17/images/{split}/{seq}/{frame_id:06d}.jpg')
     parser.add_argument('--vis', action='store_true')
 
     parser.add_argument('--save_dir', type=str, default='track_results/{dataset_name}/{split}')
@@ -35,6 +36,7 @@ def get_args():
     parser.add_argument('--debug', action='store_true', help='debug mode, the bbox is the predicted bbox by motion model')
 
     return parser.parse_args()
+
 
 def save_results(folder_name, seq_name, results, data_type='default'):
     """
@@ -53,11 +55,12 @@ def save_results(folder_name, seq_name, results, data_type='default'):
     with open(os.path.join('./track_results', folder_name, seq_name + '.txt'), 'w') as f:
         for frame_id, target_ids, tlwhs, clses, scores in results:
             for id, tlwh, score in zip(target_ids, tlwhs, scores):
-                    f.write(f'{frame_id},{id},{tlwh[0]:.2f},{tlwh[1]:.2f},{tlwh[2]:.2f},{tlwh[3]:.2f},{score:.2f},-1,-1,-1\n')
+                f.write(f'{frame_id},{id},{tlwh[0]:.2f},{tlwh[1]:.2f},{tlwh[2]:.2f},{tlwh[3]:.2f},{score:.2f},-1,-1,-1\n')
 
     f.close()
 
     return folder_name
+
 
 def plot_img(img, frame_id, results, save_dir):
     """
@@ -85,10 +88,11 @@ def plot_img(img, frame_id, results, save_dir):
         cv2.rectangle(img_, tlbr[:2], tlbr[2:], get_color(id), thickness=3, )
         # note the id and cls
         text = f'{cls}_{id}'
-        cv2.putText(img_, text, (tlbr[0], tlbr[1]), fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1, 
-                        color=(255, 164, 0), thickness=2)
+        cv2.putText(img_, text, (tlbr[0], tlbr[1]), fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1,
+                    color=(255, 164, 0), thickness=2)
 
     cv2.imwrite(filename=os.path.join(save_dir, f'{frame_id:05d}.jpg'), img=img_)
+
 
 def get_color(idx):
     """
@@ -100,19 +104,22 @@ def get_color(idx):
 
     return color
 
+
 def read_meta_data(file_path):
     ret = dict()  # key: str, value: list
     with open(file_path, 'r') as f:
 
         while True:
             row = f.readline().strip()
-            if not row: break
+            if not row:
+                break
 
             items = row.split(',')
             ret[items[0]] = [float(items[i]) for i in range(1, len(items))]
     f.close()
 
     return ret
+
 
 def main(args):
 
@@ -125,7 +132,7 @@ def main(args):
     manner = cfgs['dataset']['manner']
     train_cfgs = cfgs['train']
     inference_cfgs = cfgs['inference']
-    # merge configs 
+    # merge configs
     cfgs = deepcopy(train_cfgs)
     cfgs.update(inference_cfgs)
     cfgs.update({'motion_model_path': args.motion_model_path})
@@ -138,9 +145,8 @@ def main(args):
 
     exp_infos = args.det_path.split('/')
 
-    
     dataset_name, split = exp_infos[-2], exp_infos[-1]
-    
+
     seq_dets = sorted(os.listdir(args.det_path))
 
     save_dir = args.save_dir.format(dataset_name=dataset_name, split=split)
@@ -148,18 +154,17 @@ def main(args):
     # read meta data (including the h and w of image)
     meta_data = read_meta_data(os.path.join(args.det_path, 'meta_data.txt'))
 
-
     for seq in seq_dets:
 
         if not '.txt' in seq or 'meta_data' in seq:  # exclude meta data file
             continue
-        
+
         logger.info(f'tracking seq {seq}')
 
-        file_name = os.path.join(args.det_path, seq)        
+        file_name = os.path.join(args.det_path, seq)
         file_content = np.loadtxt(file_name, dtype=float, delimiter=',')
 
-        # get max frames 
+        # get max frames
         max_frame_id = file_content[:, 0].max()
         max_frame_id = int(max_frame_id)
 
@@ -181,7 +186,7 @@ def main(args):
             current_det = current_det[:, 2: 8]
 
             output_tracklets = trakcer.update(current_det, meta_data=seq_meta_data)
-            
+
             # save results
             cur_tlwh, cur_id, cur_cls, cur_score = [], [], [], []
             for trk in output_tracklets:
@@ -190,11 +195,11 @@ def main(args):
                     if trk.predicted_last_bbox is None:
                         bbox = trk.get_bbox()
                     else:
-                        bbox = trk.predicted_last_bbox 
+                        bbox = trk.predicted_last_bbox
                         bbox[:2] -= 0.5 * bbox[2:]
                 else:
                     bbox = trk.get_bbox()
-                    
+
                 id = trk.track_id
                 cls = trk.category
                 score = trk.score
@@ -209,17 +214,17 @@ def main(args):
 
             if args.vis:
                 cur_frame_path = os.path.join(args.data_root.format(split=split, seq=seq[:-4], frame_id=frame_id))
-               
+
                 cur_frame = cv2.imread(cur_frame_path)
                 assert cur_frame is not None, cur_frame_path
-                plot_img(img=cur_frame, frame_id=frame_id, results=[cur_tlwh, cur_id, cur_cls], 
+                plot_img(img=cur_frame, frame_id=frame_id, results=[cur_tlwh, cur_id, cur_cls],
                          save_dir=os.path.join(save_dir, 'vis_results'))
-                
+
         logger.info(f'saving results of {seq}')
 
         model_name = args.config_file.split('/')[-1].split('.')[0]
-        save_results(folder_name=os.path.join(dataset_name + '_' + model_name, split), 
-                     seq_name=seq[:-4], 
+        save_results(folder_name=os.path.join(dataset_name + '_' + model_name, split),
+                     seq_name=seq[:-4],
                      results=results)
 
 

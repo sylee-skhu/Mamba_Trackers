@@ -2,18 +2,19 @@
 Track from saved det results
 """
 
-import numpy as np 
-import os 
+import numpy as np
+import os
 import argparse
 from loguru import logger
-import cv2 
+import cv2
 
 from tqdm import tqdm
 
 from naive_tracker import NaiveTracker
 
+
 def get_args():
-    
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--det_path', required=True, type=str)
@@ -24,12 +25,13 @@ def get_args():
     parser.add_argument('--track_buffer', type=int, default=30)
     parser.add_argument("--match_thresh", type=float, default=0.9)
 
-    parser.add_argument('--data_root', type=str, default='/data/wujiapeng/datasets/MOT17/images/{split}/{seq}/{frame_id:06d}.jpg')
+    parser.add_argument('--data_root', type=str, default='/home/sangyun/Datasets/MOT17/images/{split}/{seq}/{frame_id:06d}.jpg')
     parser.add_argument('--vis', action='store_true')
 
     parser.add_argument('--save_dir', type=str, default='track_results/{dataset_name}/{split}')
 
     return parser.parse_args()
+
 
 def save_results(folder_name, seq_name, results, data_type='default'):
     """
@@ -48,11 +50,12 @@ def save_results(folder_name, seq_name, results, data_type='default'):
     with open(os.path.join('./track_results', folder_name, seq_name + '.txt'), 'w') as f:
         for frame_id, target_ids, tlwhs, clses, scores in results:
             for id, tlwh, score in zip(target_ids, tlwhs, scores):
-                    f.write(f'{frame_id},{id},{tlwh[0]:.2f},{tlwh[1]:.2f},{tlwh[2]:.2f},{tlwh[3]:.2f},{score:.2f},-1,-1,-1\n')
+                f.write(f'{frame_id},{id},{tlwh[0]:.2f},{tlwh[1]:.2f},{tlwh[2]:.2f},{tlwh[3]:.2f},{score:.2f},-1,-1,-1\n')
 
     f.close()
 
     return folder_name
+
 
 def plot_img(img, frame_id, results, save_dir):
     """
@@ -82,10 +85,11 @@ def plot_img(img, frame_id, results, save_dir):
         cv2.rectangle(img_, tlbr[:2], tlbr[2:], get_color(id), thickness=3, )
         # note the id and cls
         text = f'{cls}_{id}'
-        cv2.putText(img_, text, (tlbr[0], tlbr[1]), fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1, 
-                        color=(255, 164, 0), thickness=2)
+        cv2.putText(img_, text, (tlbr[0], tlbr[1]), fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1,
+                    color=(255, 164, 0), thickness=2)
 
     cv2.imwrite(filename=os.path.join(save_dir, f'{frame_id:05d}.jpg'), img=img_)
+
 
 def get_color(idx):
     """
@@ -97,26 +101,27 @@ def get_color(idx):
 
     return color
 
+
 def main(args):
 
     exp_infos = args.det_path.split('/')
     dataset_name, split = exp_infos[-2], exp_infos[-1]
-    
+
     seq_dets = sorted(os.listdir(args.det_path))
 
     save_dir = args.save_dir.format(dataset_name=dataset_name, split=split)
 
     for seq in seq_dets:
 
-        if not '.txt' in seq or 'meta_data' in seq: 
+        if not '.txt' in seq or 'meta_data' in seq:
             continue
-        
+
         logger.info(f'\ntracking seq {seq}')
 
-        file_name = os.path.join(args.det_path, seq)        
+        file_name = os.path.join(args.det_path, seq)
         file_content = np.loadtxt(file_name, dtype=float, delimiter=',')
 
-        # get max frames 
+        # get max frames
         max_frame_id = file_content[:, 0].max()
         max_frame_id = int(max_frame_id)
 
@@ -135,7 +140,7 @@ def main(args):
             current_det = current_det[:, 2: 8]
 
             output_tracklets = trakcer.update(current_det, )
-            
+
             # save results
             cur_tlwh, cur_id, cur_cls, cur_score = [], [], [], []
             for trk in output_tracklets:
@@ -145,7 +150,7 @@ def main(args):
                 score = trk.score
 
                 # TODO filter box
-                cur_tlwh.append (bbox)
+                cur_tlwh.append(bbox)
                 cur_id.append(id)
                 cur_cls.append(cls)
                 cur_score.append(score)
@@ -154,13 +159,13 @@ def main(args):
 
             if args.vis:
                 cur_frame_path = os.path.join(args.data_root.format(split=split, seq=seq[:-4], frame_id=frame_id))
-               
+
                 cur_frame = cv2.imread(cur_frame_path)
-                plot_img(img=cur_frame, frame_id=frame_id, results=[cur_tlwh, cur_id, cur_cls], 
+                plot_img(img=cur_frame, frame_id=frame_id, results=[cur_tlwh, cur_id, cur_cls],
                          save_dir=os.path.join(save_dir, 'vis_results'))
 
-        save_results(folder_name=os.path.join(dataset_name + '_' + args.motion, split), 
-                     seq_name=seq[:-4], 
+        save_results(folder_name=os.path.join(dataset_name + '_' + args.motion, split),
+                     seq_name=seq[:-4],
                      results=results)
 
 
