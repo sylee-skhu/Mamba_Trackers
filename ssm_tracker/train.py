@@ -1,7 +1,7 @@
-import os 
-import numpy as np 
-import torch 
-import yaml 
+import os
+import numpy as np
+import torch
+import yaml
 import argparse
 
 from dataset.dataset import TrajDataset, TrajDatasetv2
@@ -17,9 +17,10 @@ from tqdm import tqdm
 
 
 MODEL_GALLERY = {
-    'MambaTrack': MambaTrack, 
+    'MambaTrack': MambaTrack,
     'TrackSSM': TrackSSM
 }
+
 
 def train(args):
 
@@ -29,19 +30,19 @@ def train(args):
     dataset_cfgs = cfgs['dataset']
     train_cfgs = cfgs['train']
 
-    # copy the experiment config file to the save path 
+    # copy the experiment config file to the save path
     save_dir = os.path.join(args.save_path, args.exp_name)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     os.system(f'cp {config_file} {save_dir}')
 
-    # dataset 
+    # dataset
     logger.info(f'Loading data')
     dataset = TrajDatasetv2(dataset_cfgs)
 
-    dataloader = DataLoader(dataset, 
-                            batch_size=train_cfgs['batch_size'], 
-                            shuffle=True, 
+    dataloader = DataLoader(dataset,
+                            batch_size=train_cfgs['batch_size'],
+                            shuffle=True,
                             )
 
     # model
@@ -53,16 +54,16 @@ def train(args):
 
     # optimizer
     if train_cfgs['optimizer'] == 'sgd':
-        optimizer = torch.optim.SGD(params=filter(lambda x : x.requires_grad, model.parameters()), 
-                                    lr=train_cfgs['lr0'], 
+        optimizer = torch.optim.SGD(params=filter(lambda x: x.requires_grad, model.parameters()),
+                                    lr=train_cfgs['lr0'],
                                     )
     elif train_cfgs['optimizer'] == 'adam':
-        optimizer = torch.optim.Adam(params=filter(lambda x : x.requires_grad, model.parameters()), 
-                                     lr=train_cfgs['lr0'], 
+        optimizer = torch.optim.Adam(params=filter(lambda x: x.requires_grad, model.parameters()),
+                                     lr=train_cfgs['lr0'],
                                      betas=[0.9, 0.98], eps=1e-8)
     else:
         optimizer = None
-        
+
     # lr scheduler
     if train_cfgs['lr_scheduler'] == 'transformer':
         lr_scheduler = TransformerLRScheduler(optimizer=optimizer, d_model=train_cfgs['d_m'], warmup_steps=4000)
@@ -71,7 +72,7 @@ def train(args):
     else:
         lr_scheduler = NoneLRScheduler(lr=train_cfgs['lr0'])
 
-    # if resume training, load the ckpt 
+    # if resume training, load the ckpt
     if args.resume:
         load_ckpt = torch.load(args.resume_ckpt)
         model.load_state_dict(load_ckpt['model'])
@@ -83,7 +84,7 @@ def train(args):
 
     # train
     logger.info('Start training!')
-    
+
     for epoch in range(start_epoch, train_cfgs['epochs'] + 1):
         logger.info(f'Start epoch {epoch}')
 
@@ -119,7 +120,6 @@ def train(args):
 
             cur_lr = optimizer.param_groups[0]['lr']
 
-
             mean_loss = (mean_loss * step + loss_value) / (step + 1)
 
             if step % 50 == 0:
@@ -129,14 +129,13 @@ def train(args):
             # save model
             save_dict = {
                 'model': model.state_dict(),
-                'optimizer': optimizer.state_dict(), 
+                'optimizer': optimizer.state_dict(),
                 'epoch': epoch,
             }
-                
+
             save_file = os.path.join(save_dir, f'epoch{epoch}.pth')
             torch.save(save_dict, save_file)
             logger.info(f'Saved ckpt file at {save_file}')
-
 
 
 if __name__ == '__main__':
@@ -144,7 +143,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--exp_name', type=str, default='mamba_track', help='experiment name for ckpt saving')
     parser.add_argument('--config_file', type=str, default='cfgs/MambaTrack.yaml')
-    parser.add_argument('--device', type=str, default='4')
+    parser.add_argument('--device', type=str, default='0')
     parser.add_argument('--save_path', type=str, default='./saved_ckpts')
 
     # resume training
